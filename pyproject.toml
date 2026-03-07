@@ -1,0 +1,23 @@
+[project]
+name = "tic"
+version = "0.1.0"
+description = "Terra Invicta Companion — data visualisation and historical trends"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "typer",
+    "watchdog",
+    "jinja2",
+    "httpx",       # for testing FastAPI
+]
+
+[project.scripts]
+tic = "tic.interface.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+
+# TIC runtime data
+.tic/
+
+# Save files — never commit real saves
+*.gz
+*.json
+
+# Allow sample saves explicitly
+!samples/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+COMMIT_MESSAGE
