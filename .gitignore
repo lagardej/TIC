@@ -9,13 +9,6 @@ build/
 # TIC runtime data
 .tic/
 
-# Save files — never commit real saves
-*.gz
-*.json
-
-# Allow sample saves explicitly
-!samples/
-
 # IDE
 .vscode/
 .idea/
