@@ -5,6 +5,64 @@ Each entry includes the decision, rationale, and any future considerations.
 
 ---
 
+## Event Sourcing Pattern (Phase 3R Refactoring)
+
+**Decision:** Aggregates track domain events; repositories extract and persist them.
+
+**Rationale:**
+- Aggregate is the source of truth: it decides what happened, not the command handler
+- DDD/Event Sourcing: command handler orchestrates, but doesn't create events
+- Clear responsibility: handler calls `repository.save(aggregate)`, which handles all persistence
+
+**Correct flow:**
+```python
+# Command handler (application layer)
+campaign = repository.get_by_name(name) or Campaign.create_new(name)
+campaign.record_save_import(game_date)  # Aggregate tracks changes
+repository.save(campaign)  # Repository extracts events and publishes
+
+# Repository (infrastructure layer)
+def save(self, campaign: Campaign) -> None:
+    events = campaign.get_pending_changes()  # Extract tracked events
+    event_store.append(campaign.id, events)  # Persist
+    message_bus.publish(events)  # Dispatch
+```
+
+**Current state (Phase 3):** Command handler creates and publishes events (WRONG).
+This must be refactored in Phase 3R before Phase 4 infrastructure is implemented.
+
+**Tracking:** Phase 3R is a required refactoring before Phase 4.
+
+---
+
+## Command Handler Return Values (Phase 3+)
+
+**Decision:** Command handlers return a minimal result DTO (aggregate ID + status), not business data.
+
+**Rationale:**
+- CQRS separation: commands are for state changes, queries are for reading
+- CLI/web layer needs the ID to show user feedback or link to next operation
+- Avoids coupling: result DTO carries only what the caller needs immediately
+- Business data (full metadata) comes from queries on projections (read-side)
+
+**Pattern:**
+```python
+@dataclass
+class ImportSaveResult:
+    campaign_id: UUID
+    is_new: bool
+
+class ImportSaveHandler:
+    def handle(self, command: ImportSaveCommand) -> ImportSaveResult:
+        # ... orchestrate domain logic ...
+        return ImportSaveResult(campaign_id=campaign.id, is_new=True)
+```
+
+**Note:** After Phase 3R, the pattern remains the same, but events are no longer created here.
+Repository.save() handles event extraction and dispatch internally.
+
+---
+
 ## Campaign Factory Method (Phase 2)
 
 **Decision:** Use `Campaign.create_new(name, id=None, created_at=None)` as the public factory.

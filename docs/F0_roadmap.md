@@ -39,14 +39,14 @@ better types from other sources:
 
 Complete the project setup before writing any domain code.
 
-- [ ] `pyproject.toml`: add `ruff` and `mypy` to dev dependencies; add
+- [x] `pyproject.toml`: add `ruff` and `mypy` to dev dependencies; add
       `[tool.ruff]` and `[tool.mypy]` config sections (strict mode)
-- [ ] `pyproject.toml`: add `fail_under = 80` to `[tool.coverage.report]`
-- [ ] `.github/workflows/ci.yml`: lint (`ruff`), type-check (`mypy`),
+- [x] `pyproject.toml`: add `fail_under = 80` to `[tool.coverage.report]`
+- [x] `.github/workflows/ci.yml`: lint (`ruff`), type-check (`mypy`),
       test (`pytest`) on every push
-- [ ] `.gitignore`: verify `*.json` exclusion does not block `samples/` —
+- [x] `.gitignore`: verify `*.json` exclusion does not block `samples/` —
       add `!samples/**` if needed
-- [ ] Confirm `tic/` is empty and ready for scaffolding
+- [x] Confirm `tic/` is empty and ready for scaffolding
 
 ---
 
@@ -56,24 +56,24 @@ Builds the event store and message bus that all bounded contexts depend on.
 Lives in `shared/`.
 
 **Domain:**
-- [ ] `shared/domain/event_store.py` — `EventStore` ABC:
+- [x] `shared/domain/event_store.py` — `EventStore` ABC:
       `append(campaign_id, event)`, `load(campaign_id) -> list`
-- [ ] `shared/domain/message_bus.py` — `MessageBus` ABC:
+- [x] `shared/domain/message_bus.py` — `MessageBus` ABC:
       `publish(event)`, `subscribe(event_type, handler)`
 
 **Infrastructure:**
-- [ ] `shared/infrastructure/sqlite_event_store.py` — `SqliteEventStore`:
+- [x] `shared/infrastructure/sqlite_event_store.py` — `SqliteEventStore`:
       full implementation, append-only, serialises events as JSON rows,
       stores event type name for deserialisation
-- [ ] `shared/infrastructure/in_memory_message_bus.py` — `InMemoryMessageBus`:
+- [x] `shared/infrastructure/in_memory_message_bus.py` — `InMemoryMessageBus`:
       synchronous, used in tests and local mode
-- [ ] `shared/infrastructure/sqlite_schema.py` — schema creation helpers,
+- [x] `shared/infrastructure/sqlite_schema.py` — schema creation helpers,
       called on first connection
 
 **Tests (`tests/shared/`):**
-- [ ] `test_sqlite_event_store.py` — append, load, ordering, isolation
+- [x] `test_sqlite_event_store.py` — append, load, ordering, isolation
       between campaign IDs
-- [ ] `test_in_memory_message_bus.py` — publish, subscribe, multiple handlers
+- [x] `test_in_memory_message_bus.py` — publish, subscribe, multiple handlers
 
 ---
 
@@ -82,14 +82,14 @@ Lives in `shared/`.
 Defines what a campaign is and what happened to it.
 
 **Domain (`campaign/domain/`):**
-- [ ] `campaign.py` — `Campaign` aggregate: `id` (UUID), `name`
+- [x] `campaign.py` — `Campaign` aggregate: `id` (UUID), `name`
       (str — e.g. `"ResistCouncil"`), `created_at` (datetime); raises
       `SaveAlreadyImported` if deduplication check fails
-- [ ] `campaign_repository.py` — `CampaignRepository` ABC:
+- [x] `campaign_repository.py` — `CampaignRepository` ABC:
       `get(campaign_id: UUID) -> Campaign | None`,
       `get_by_name(name: str) -> Campaign | None`,
       `save(campaign: Campaign)`
-- [ ] `events/save_imported.py` — `SaveImported` dataclass:
+- [x] `events/save_imported.py` — `SaveImported` dataclass:
       `campaign_id` (UUID), `name` (str), `faction_display_name` (str),
       `game_date` (datetime), `difficulty` (int), `scenario` (str),
       `selected_factions` (list[str]), `research_speed_multiplier` (float),
@@ -97,8 +97,8 @@ Defines what a campaign is and what happened to it.
       `imported_at` (datetime)
 
 **Tests (`tests/campaign/domain/`):**
-- [ ] `test_campaign.py` — aggregate creation, deduplication guard
-- [ ] `test_save_imported.py` — event construction, field types
+- [x] `test_campaign.py` — aggregate creation, deduplication guard
+- [x] `test_save_imported.py` — event construction, field types
 
 ---
 
@@ -108,13 +108,13 @@ Orchestrates the import use case. Reads the save file, produces events,
 persists them.
 
 **Application (`campaign/application/`):**
-- [ ] `save_file_reader.py` — `SaveFileReader` ABC:
+- [x] `save_file_reader.py` — `SaveFileReader` ABC:
       `read(path: Path) -> SaveFileData`
-- [ ] `import_save.py` — `ImportSaveCommand` dataclass (`file_path: Path`);
+- [x] `import_save.py` — `ImportSaveCommand` dataclass (`file_path: Path`);
       `ImportSaveHandler`: resolves or creates campaign by `name`,
       deduplicates by `game_date`, appends `SaveImported` event, publishes
       to message bus
-- [ ] `save_file_data.py` — `SaveFileData` value object: typed fields
+- [x] `save_file_data.py` — `SaveFileData` value object: typed fields
       extracted from three source types. Canonical sources and types:
 
       **`TITimeState`**
@@ -144,10 +144,34 @@ persists them.
       - (`techProgress` faction ID refs are not extracted in this slice)
 
 **Tests (`tests/campaign/application/`):**
-- [ ] `test_import_save_handler.py` — successful import, deduplication
+- [x] `test_import_save_handler.py` — successful import, deduplication
       (same game_date → no-op), new campaign creation, existing campaign
       append; use fakes for `SaveFileReader`, `CampaignRepository`,
       `EventStore`, `MessageBus`
+
+---
+
+### Phase 3R — Refactoring: Event Sourcing Pattern
+
+**Current state (Phase 3):** Command handler creates and publishes events directly.
+
+**Problem:** Violates DDD/Event Sourcing principles. The aggregate should be the source
+of truth for what happened, not the command handler.
+
+**Refactoring:**
+1. Add event tracking to `Campaign` aggregate: `campaign.changes: list[SaveImported]`
+2. `record_save_import()` appends events to `campaign.changes` (not published)
+3. Update `CampaignRepository.save()` to:
+   - Extract events from aggregate
+   - Append to event store
+   - Dispatch to message bus
+4. Update `ImportSaveHandler` to only call `repository.save()` (no direct event publishing)
+5. Update Phase 2 tests to verify event collection on aggregate
+6. Dispatcher injected as dependency of repository or event store
+
+**Tracking:** This refactoring must happen before Phase 4 (Infrastructure) to ensure
+repository and event store implementations follow the correct pattern. Do not merge Phase 4
+without completing Phase 3R.
 
 ---
 
@@ -255,7 +279,7 @@ Wires the query to a FastAPI + HTMX + Jinja2 page.
 
 ---
 
-### Phase 1R — Refactoring
+### Phase 1R — Refactoring: Event Deserialization
 
 If Phase 1 event deserialization boilerplate exceeds ~100 lines across all event types,
 evaluate Pydantic for F1+. Do not introduce Pydantic mid-F0; make the current solution

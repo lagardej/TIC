@@ -9,7 +9,7 @@ from tic.shared.infrastructure.in_memory_message_bus import InMemoryMessageBus
 
 
 @dataclass
-class TestEvent:
+class SampleEvent:
     """A simple test event."""
 
     value: str
@@ -32,12 +32,12 @@ class TestInMemoryMessageBus:
         def handler(event: Any) -> None:
             handled_events.append(event)
 
-        message_bus.subscribe(TestEvent, handler)
-        event = TestEvent(value="test")
+        message_bus.subscribe(SampleEvent, handler)
+        event = SampleEvent(value="test")
         message_bus.publish(event)
 
         assert len(handled_events) == 1
-        assert isinstance(handled_events[0], TestEvent)
+        assert isinstance(handled_events[0], SampleEvent)
         assert handled_events[0].value == "test"
 
     def test_publish_with_multiple_handlers(
@@ -53,9 +53,9 @@ class TestInMemoryMessageBus:
         def handler2(event: Any) -> None:
             handler2_events.append(event)
 
-        message_bus.subscribe(TestEvent, handler1)
-        message_bus.subscribe(TestEvent, handler2)
-        event = TestEvent(value="test")
+        message_bus.subscribe(SampleEvent, handler1)
+        message_bus.subscribe(SampleEvent, handler2)
+        event = SampleEvent(value="test")
         message_bus.publish(event)
 
         assert len(handler1_events) == 1
@@ -72,10 +72,10 @@ class TestInMemoryMessageBus:
         def handler(event: Any) -> None:
             handled_events.append(event)
 
-        message_bus.subscribe(TestEvent, handler)
-        message_bus.publish(TestEvent(value="first"))
-        message_bus.publish(TestEvent(value="second"))
-        message_bus.publish(TestEvent(value="third"))
+        message_bus.subscribe(SampleEvent, handler)
+        message_bus.publish(SampleEvent(value="first"))
+        message_bus.publish(SampleEvent(value="second"))
+        message_bus.publish(SampleEvent(value="third"))
 
         assert len(handled_events) == 3
         assert handled_events[0].value == "first"
@@ -84,7 +84,7 @@ class TestInMemoryMessageBus:
 
     def test_no_handlers_for_event_type(self, message_bus: InMemoryMessageBus) -> None:
         """Test that publishing without handlers does not raise."""
-        event = TestEvent(value="test")
+        event = SampleEvent(value="test")
         # Should not raise
         message_bus.publish(event)
 
@@ -97,12 +97,12 @@ class TestInMemoryMessageBus:
         def handler(event: Any) -> None:
             handled_events.append(event)
 
-        message_bus.subscribe(TestEvent, handler)
-        message_bus.publish(TestEvent(value="first"))
+        message_bus.subscribe(SampleEvent, handler)
+        message_bus.publish(SampleEvent(value="first"))
 
         # Unsubscribe
-        message_bus.unsubscribe(TestEvent, handler)
-        message_bus.publish(TestEvent(value="second"))
+        message_bus.unsubscribe(SampleEvent, handler)
+        message_bus.publish(SampleEvent(value="second"))
 
         assert len(handled_events) == 1
         assert handled_events[0].value == "first"
