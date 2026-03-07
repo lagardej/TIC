@@ -5,7 +5,7 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Type
 from uuid import UUID
 
 from tic.shared.domain.event_store import EventStore
@@ -17,7 +17,7 @@ class EventEncoder(json.JSONEncoder):
 
     def default(self, obj: Any) -> Any:
         """Encode datetime and UUID objects as strings."""
-        if isinstance(obj, (datetime,)):
+        if isinstance(obj, datetime):
             return obj.isoformat()
         if isinstance(obj, UUID):
             return str(obj)
@@ -53,15 +53,15 @@ class SqliteEventStore(EventStore):
 
         # Serialize the event data
         if dataclasses.is_dataclass(event):
-            event_data_dict = dataclasses.asdict(event)
+            event_data_dict: dict[str, Any] = dataclasses.asdict(event)
         else:
             # Fallback for non-dataclass objects
-            event_data_dict = event.__dict__
+            event_data_dict = vars(event)
 
         event_data_json = json.dumps(event_data_dict, cls=EventEncoder)
 
         # Store in database
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(str(self.db_path))
         try:
             cursor = conn.cursor()
             cursor.execute(
@@ -84,7 +84,7 @@ class SqliteEventStore(EventStore):
         Returns:
             A list of events in append order. Empty list if no events exist.
         """
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(str(self.db_path))
         try:
             cursor = conn.cursor()
             cursor.execute(
@@ -101,10 +101,10 @@ class SqliteEventStore(EventStore):
             conn.close()
 
         events: list[Any] = []
-        for event_type, event_data_json in rows:
-            event_data = json.loads(event_data_json)
+        for event_type_str, event_data_json in rows:
+            event_data: dict[str, Any] = json.loads(event_data_json)
             # Reconstruct the event object
-            event = self._deserialize_event(event_type, event_data)
+            event = self._deserialize_event(event_type_str, event_data)
             events.append(event)
 
         return events
@@ -126,14 +126,14 @@ class SqliteEventStore(EventStore):
             # Import the module and get the class
             module_name, class_name = event_type.rsplit(".", 1)
             module = __import__(module_name, fromlist=[class_name])
-            event_class = getattr(module, class_name)
+            event_class: Type[Any] = getattr(module, class_name)
 
             # Reconstruct the dataclass instance
             if dataclasses.is_dataclass(event_class):
                 return event_class(**event_data)
             else:
                 # Fallback for non-dataclass
-                instance = event_class.__new__(event_class)
+                instance: Any = event_class.__new__(event_class)
                 instance.__dict__.update(event_data)
                 return instance
         except (ImportError, AttributeError, TypeError) as e:

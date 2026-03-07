@@ -1,8 +1,7 @@
 """Message bus abstraction for event publishing and subscription."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable
-
+from typing import Any, Callable, Type
 
 EventHandler = Callable[[Any], None]
 
@@ -24,7 +23,7 @@ class MessageBus(ABC):
         """
 
     @abstractmethod
-    def subscribe(self, event_type: type, handler: EventHandler) -> None:
+    def subscribe(self, event_type: Type[Any], handler: EventHandler) -> None:
         """Subscribe a handler to events of a specific type.
 
         Args:
@@ -34,7 +33,7 @@ class MessageBus(ABC):
         """
 
     @abstractmethod
-    def unsubscribe(self, event_type: type, handler: EventHandler) -> None:
+    def unsubscribe(self, event_type: Type[Any], handler: EventHandler) -> None:
         """Unsubscribe a handler from events of a specific type.
 
         Args:

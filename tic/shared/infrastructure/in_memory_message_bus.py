@@ -1,6 +1,6 @@
 """In-memory implementation of the message bus."""
 
-from typing import Any
+from typing import Any, Type
 
 from tic.shared.domain.message_bus import EventHandler, MessageBus
 
@@ -14,7 +14,7 @@ class InMemoryMessageBus(MessageBus):
 
     def __init__(self) -> None:
         """Initialize the message bus."""
-        self._handlers: dict[type, list[EventHandler]] = {}
+        self._handlers: dict[Type[Any], list[EventHandler]] = {}
 
     def publish(self, event: Any) -> None:
         """Publish an event to all subscribers.
@@ -27,7 +27,7 @@ class InMemoryMessageBus(MessageBus):
         for handler in handlers:
             handler(event)
 
-    def subscribe(self, event_type: type, handler: EventHandler) -> None:
+    def subscribe(self, event_type: Type[Any], handler: EventHandler) -> None:
         """Subscribe a handler to events of a specific type.
 
         Args:
@@ -38,7 +38,7 @@ class InMemoryMessageBus(MessageBus):
             self._handlers[event_type] = []
         self._handlers[event_type].append(handler)
 
-    def unsubscribe(self, event_type: type, handler: EventHandler) -> None:
+    def unsubscribe(self, event_type: Type[Any], handler: EventHandler) -> None:
         """Unsubscribe a handler from events of a specific type.
 
         Args:

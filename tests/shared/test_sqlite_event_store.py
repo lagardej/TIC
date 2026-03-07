@@ -1,14 +1,12 @@
 """Tests for SQLite event store implementation."""
 
-import json
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
-from tic.shared.domain.event_store import EventStore
 from tic.shared.infrastructure.sqlite_event_store import SqliteEventStore
 
 
@@ -21,13 +19,14 @@ class TestEvent:
 
 
 class TestSqliteEventStore:
-    """Tests for SqliteEventStore."""
+    """Tests for SQLite event store implementation."""
 
     @pytest.fixture
     def db_path(self) -> Path:
-        """Create a temporary database file."""
+        """Create a temporary database directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            yield Path(tmpdir) / "test.db"
+            db_file = Path(tmpdir) / "test.db"
+            yield db_file
 
     @pytest.fixture
     def event_store(self, db_path: Path) -> SqliteEventStore:
@@ -43,6 +42,7 @@ class TestSqliteEventStore:
 
         events = event_store.load(campaign_id)
         assert len(events) == 1
+        assert isinstance(events[0], TestEvent)
         assert events[0].campaign_id == campaign_id
         assert events[0].value == "test"
 
@@ -58,6 +58,7 @@ class TestSqliteEventStore:
 
         events = event_store.load(campaign_id)
         assert len(events) == 3
+        assert isinstance(events[0], TestEvent)
         assert events[0].value == "first"
         assert events[1].value == "second"
         assert events[2].value == "third"
@@ -83,6 +84,8 @@ class TestSqliteEventStore:
 
         assert len(events_1) == 1
         assert len(events_2) == 1
+        assert isinstance(events_1[0], TestEvent)
+        assert isinstance(events_2[0], TestEvent)
         assert events_1[0].value == "campaign1"
         assert events_2[0].value == "campaign2"
 
@@ -101,4 +104,5 @@ class TestSqliteEventStore:
         events_after = event_store.load(campaign_id)
         # Verify previous event is still there unchanged
         assert len(events_after) == 2
+        assert isinstance(events_after[0], TestEvent)
         assert events_after[0].value == "first"

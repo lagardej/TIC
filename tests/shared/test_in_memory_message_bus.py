@@ -1,10 +1,10 @@
 """Tests for in-memory message bus implementation."""
 
 from dataclasses import dataclass
+from typing import Any
 
 import pytest
 
-from tic.shared.domain.message_bus import MessageBus
 from tic.shared.infrastructure.in_memory_message_bus import InMemoryMessageBus
 
 
@@ -27,9 +27,9 @@ class TestInMemoryMessageBus:
         self, message_bus: InMemoryMessageBus
     ) -> None:
         """Test publishing an event to a single subscriber."""
-        handled_events: list[TestEvent] = []
+        handled_events: list[Any] = []
 
-        def handler(event: TestEvent) -> None:
+        def handler(event: Any) -> None:
             handled_events.append(event)
 
         message_bus.subscribe(TestEvent, handler)
@@ -37,19 +37,20 @@ class TestInMemoryMessageBus:
         message_bus.publish(event)
 
         assert len(handled_events) == 1
+        assert isinstance(handled_events[0], TestEvent)
         assert handled_events[0].value == "test"
 
     def test_publish_with_multiple_handlers(
         self, message_bus: InMemoryMessageBus
     ) -> None:
         """Test that an event reaches all registered handlers."""
-        handler1_events: list[TestEvent] = []
-        handler2_events: list[TestEvent] = []
+        handler1_events: list[Any] = []
+        handler2_events: list[Any] = []
 
-        def handler1(event: TestEvent) -> None:
+        def handler1(event: Any) -> None:
             handler1_events.append(event)
 
-        def handler2(event: TestEvent) -> None:
+        def handler2(event: Any) -> None:
             handler2_events.append(event)
 
         message_bus.subscribe(TestEvent, handler1)
@@ -66,9 +67,9 @@ class TestInMemoryMessageBus:
         self, message_bus: InMemoryMessageBus
     ) -> None:
         """Test that a handler receives multiple published events."""
-        handled_events: list[TestEvent] = []
+        handled_events: list[Any] = []
 
-        def handler(event: TestEvent) -> None:
+        def handler(event: Any) -> None:
             handled_events.append(event)
 
         message_bus.subscribe(TestEvent, handler)
@@ -91,9 +92,9 @@ class TestInMemoryMessageBus:
         self, message_bus: InMemoryMessageBus
     ) -> None:
         """Test that unsubscribing a handler prevents it from receiving events."""
-        handled_events: list[TestEvent] = []
+        handled_events: list[Any] = []
 
-        def handler(event: TestEvent) -> None:
+        def handler(event: Any) -> None:
             handled_events.append(event)
 
         message_bus.subscribe(TestEvent, handler)

@@ -10,7 +10,7 @@ def create_event_store_schema(db_path: Path) -> None:
     Args:
         db_path: Path to the SQLite database file.
     """
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(str(db_path))
     try:
         cursor = conn.cursor()
         cursor.execute(
