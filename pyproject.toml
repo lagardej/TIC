@@ -12,6 +12,12 @@ dependencies = [
     "httpx",       # for testing FastAPI
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0",
+    "pytest-cov",
+]
+
 [project.scripts]
 tic-cli = "tic.cli:app"
 
@@ -21,3 +27,8 @@ build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--cov=tic --cov-report=term-missing"
+
+[tool.coverage.report]
+show_missing = true
+omit = ["tests/*"]
