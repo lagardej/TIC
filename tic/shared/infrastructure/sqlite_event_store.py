@@ -46,18 +46,19 @@ class SqliteEventStore(EventStore):
 
         Args:
             campaign_id: The campaign identifier.
-            event: The event to append (typically a dataclass instance).
+            event: The event to append (must be a dataclass instance).
+
+        Raises:
+            ValueError: If event is not a dataclass instance.
         """
         # Get the event type name
         event_type = f"{event.__class__.__module__}.{event.__class__.__name__}"
 
         # Serialize the event data
-        if dataclasses.is_dataclass(event):
-            event_data_dict: dict[str, Any] = dataclasses.asdict(event)
-        else:
-            # Fallback for non-dataclass objects
-            event_data_dict = vars(event)
+        if not dataclasses.is_dataclass(event) or isinstance(event, type):
+            raise ValueError(f"Event must be a dataclass instance, got {type(event)}")
 
+        event_data_dict: dict[str, Any] = dataclasses.asdict(event)
         event_data_json = json.dumps(event_data_dict, cls=EventEncoder)
 
         # Store in database
@@ -129,12 +130,9 @@ class SqliteEventStore(EventStore):
             event_class: Type[Any] = getattr(module, class_name)
 
             # Reconstruct the dataclass instance
-            if dataclasses.is_dataclass(event_class):
-                return event_class(**event_data)
-            else:
-                # Fallback for non-dataclass
-                instance: Any = event_class.__new__(event_class)
-                instance.__dict__.update(event_data)
-                return instance
+            if not dataclasses.is_dataclass(event_class):
+                raise ValueError(f"Event class {event_type} is not a dataclass")
+
+            return event_class(**event_data)
         except (ImportError, AttributeError, TypeError) as e:
             raise ValueError(f"Cannot deserialize event type {event_type}: {e}") from e
