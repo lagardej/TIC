@@ -27,7 +27,7 @@ TIC follows **DDD, CQRS, and Event Sourcing** principles, organised by bounded c
 
 ### Bounded Contexts
 
-- **save_import** — detects, parses, and ingests Terra Invicta save files into the event store
+- **campaign** — imports Terra Invicta save files and maintains the Campaign aggregate
 - **game_state** — projects current world state from the event store
 - **history** — projects trends and changes over time
 - **reporting** — serves queries to the UI and CLI
@@ -36,13 +36,30 @@ TIC follows **DDD, CQRS, and Event Sourcing** principles, organised by bounded c
 
 ```
 tic/
-├── save_import/
-├── game_state/
-├── history/
-├── reporting/
-├── shared/               # event store, message bus
-└── interface/            # CLI (Typer) + web UI (FastAPI + HTMX)
+├── cli.py                # root CLI entry point — aggregates bounded context sub-apps
+├── <context>/            # e.g. campaign, game_state, history, reporting
+│   ├── domain/           # aggregates, value objects, ABCs for repository and services
+│   │   └── events/       # one file per event
+│   ├── application/      # one file per use case — contains command dataclass and handler
+│   │   └── <abc>.py      # ABC for any service the application layer depends on
+│   ├── infrastructure/   # concrete implementations — named after technology and role
+│   └── interface/
+│       └── cli/          # one file per CLI command
+└── shared/               # event store, message bus — same internal structure as contexts
+    ├── domain/
+    └── infrastructure/
 ```
+
+**Bounded context communication:** contexts never import from each other directly. All cross-context communication goes through domain events on the message bus in `shared/`. A context publishes events; other contexts subscribe. `shared/` is the sole exception — all contexts may import from it directly.
+
+**Layer dependency rule:**
+```
+interface → application → domain
+infrastructure → any layer (never the reverse)
+```
+If a class in any layer needs a service backed by a third-party dependency, it declares an ABC in its own layer. The concrete implementation lives in `infrastructure/` and is injected via constructor.
+
+**File granularity:** one file per concept — event, command, CLI command, ABC, implementation. `__init__.py` files aggregate and re-export; they contain no logic. Infrastructure implementations are named after their technology: `sqlite_campaign_repository.py`, not `campaign_repository.py`.
 
 ### Storage
 

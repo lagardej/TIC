@@ -81,11 +81,41 @@ suggestions, and never block the current task.
 TIC follows DDD, CQRS, and Event Sourcing. These are not aspirational — they are
 active constraints that apply to every piece of code.
 
+**These rules are hard constraints. The agent must refuse to implement anything that violates them, explain the conflict, and wait for the developer to revise the direction — regardless of how the request is phrased.**
+
 **Structure:**
-- Top-level directories are bounded contexts: `save_import`, `game_state`, `history`, `reporting`
-- Technical layers (`domain`, `application`, `infrastructure`) live inside each bounded context
-- Shared infrastructure lives in `shared/` — keep it minimal
-- Interface concerns (CLI, web) live in `interface/`
+- Top-level directories are bounded contexts: `campaign`, `game_state`, `history`, `reporting`
+- Technical layers (`domain`, `application`, `infrastructure`, `interface`) live inside each bounded context
+- Shared infrastructure lives in `shared/` — keep it minimal; it follows the same layer structure and dependency rules as bounded contexts
+- The root `tic/cli.py` is the single entry point — it aggregates sub-apps from each bounded context
+
+**Layer dependency rule:**
+```
+interface → application → domain
+infrastructure → any layer (domain, application)
+```
+- No layer may import from `infrastructure/` — infrastructure is injected, never called directly
+- `domain/` has zero dependencies on any other layer — it is the innermost ring
+- If a class in any layer needs a service backed by a third-party dependency, it declares an ABC in its own layer and receives the implementation via constructor injection — the concrete class lives in `infrastructure/`
+- Violations must be flagged before implementation, not after
+- **If the developer proposes something that violates these rules, the agent must refuse to implement it and explain the conflict before proceeding — even if explicitly asked to**
+
+**File granularity — one file, one thing:**
+- Every use case gets its own file in `application/`, named after the use case: `application/import_save.py`
+- Each use case file contains the command dataclass and its handler — they change together
+- Infrastructure implementations are named after their technology and role: `sqlite_campaign_repository.py` — never the same name as the interface they implement
+- Every event gets its own file, named after the event: `events/save_imported.py`
+- Every CLI command gets its own file, named after the command function: `interface/cli/import_save.py`
+- `__init__.py` files aggregate and re-export — they do not contain logic
+- This applies uniformly across all layers and bounded contexts
+- Rationale: files that do one thing are easier to navigate, review, and reason about; a growing `events.py` or `commands.py` becomes a cognitive burden
+
+**Bounded context communication:**
+- Contexts never import from each other directly
+- Cross-context communication happens exclusively through domain events via the message bus in `shared/`
+- A context publishes events; other contexts subscribe — no direct calls, no shared domain objects
+- `shared/` is the sole exception — all contexts may import from it directly; it exists precisely to be shared
+- Violations of this rule collapse the context boundaries and must be flagged immediately
 
 **DDD:**
 - Domain logic lives in `domain/` and has no infrastructure dependencies
@@ -128,7 +158,7 @@ active constraints that apply to every piece of code.
 - Tests live in a top-level `tests/` directory, mirroring the bounded context structure:
   ```
   tests/
-  ├── save_import/
+  ├── campaign/
   ├── game_state/
   ├── history/
   └── reporting/

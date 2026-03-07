@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tic = "tic.interface.cli:app"
+tic-cli = "tic.cli:app"
 
 [build-system]
 requires = ["hatchling"]
