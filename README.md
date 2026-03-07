@@ -115,32 +115,6 @@ Compatible with Windows and Linux.
 
 ---
 
-## Demo Mode
-
-A live demo is hosted on [Render](https://render.com) and auto-deployed on every push to `main`.
-
-### How It Works
-
-The demo runs TIC in a read-only mode seeded with sample save data shipped in the repository under `samples/`. On startup, the app detects demo mode, seeds a pre-built campaign from those samples, and serves the UI — no save files or local setup required.
-
-Demo mode is activated via an environment variable:
-
-```
-TIC_DEMO=1
-```
-
-### Constraints
-
-- No file watching — the watcher is disabled, imports are seeded at startup only
-- No writes — the campaign database is ephemeral, rebuilt fresh on each startup
-- No personal data — sample saves in `samples/` contain only game state, no player-identifying information
-
-### Deployment
-
-The repository includes a `render.yaml` for one-click deploy. Render auto-deploys on every push to `main`.
-
----
-
 ## Status
 
 Early development — scaffolding in progress.

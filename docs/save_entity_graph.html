@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TI Save File — Entity Dependency Graph</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f1117; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
+  #header { padding: 14px 20px; background: #1a1d27; border-bottom: 1px solid #2a2d3a; display: flex; align-items: center; gap: 16px; }
+  #header h1 { font-size: 15px; font-weight: 600; color: #c9d1ff; letter-spacing: 0.02em; }
+  #header p { font-size: 12px; color: #666; }
+  #legend { display: flex; gap: 16px; margin-left: auto; align-items: center; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #888; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  #canvas-container { width: 100%; height: calc(100vh - 54px); position: relative; }
+  canvas { display: block; }
+  #tooltip {
+    position: absolute; pointer-events: none; background: #1e2130;
+    border: 1px solid #3a3f55; border-radius: 6px; padding: 10px 14px;
+    font-size: 12px; max-width: 300px; line-height: 1.6; display: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  #tooltip .tt-title { font-weight: 600; color: #c9d1ff; margin-bottom: 4px; }
+  #tooltip .tt-type { font-size: 10px; color: #666; margin-bottom: 6px; }
+  #tooltip .tt-refs { color: #7a9ff5; font-size: 11px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="header">
+  <div>
+    <h1>Terra Invicta — Save File Entity Dependencies</h1>
+    <p>Edges are ID references only, verified from save data &nbsp;·&nbsp; Hover nodes &nbsp;·&nbsp; Drag to pan &nbsp;·&nbsp; Scroll to zoom</p>
+  </div>
+  <div id="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#5b7cf7"></div>Core</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#7fc97f"></div>Geopolitical</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f7a85b"></div>Space</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c97fff"></div>Faction / Agents</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff6b6b"></div>Alien</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5bcfc9"></div>Infrastructure</div>
+  </div>
+</div>
+<div id="canvas-container">
+  <canvas id="graph"></canvas>
+  <div id="tooltip"></div>
+</div>
+
+<script>
+// All edges verified against actual save file ID references.
+// A -> B means A's Value contains a field with B's ID.
+
+const NODES = [
+  // Core
+  { id: 'TIMetadataState',       label: 'TIMetadata\nState',        group: 'core' },
+  { id: 'TITimeState',           label: 'TITime\nState',            group: 'core' },
+  { id: 'TIGlobalValuesState',   label: 'TIGlobalValues\nState',    group: 'core' },
+  { id: 'TIGlobalResearchState', label: 'TIGlobalResearch\nState',  group: 'core' },
+
+  // Geopolitical
+  { id: 'TINationState',    label: 'TINation\nState',    group: 'geo',
+    refs: ['controlPoints[]→TIControlPoint', 'regions[]→TIRegionState', 'federation→TIFederationState', 'wars[]→TIWarState', 'armies[]→TIArmyState'] },
+  { id: 'TIControlPoint',   label: 'TIControl\nPoint',   group: 'geo',
+    refs: ['nation→TINationState', 'faction→TIFactionState'] },
+  { id: 'TIRegionState',    label: 'TIRegion\nState',    group: 'geo',
+    refs: ['nation→TINationState', 'alienFacility→TIRegionAlienFacilityState', 'alienActivity→TIRegionAlienActivityState', 'alienLanding→TIRegionUFOLandingState', 'alienCrashdown→TIRegionUFOCrashdownState', 'xenoforming→TIRegionXenoformingState'] },
+  { id: 'TIFederationState', label: 'TIFederation\nState', group: 'geo',
+    refs: ['members[]→TINationState'] },
+  { id: 'TIWarState',       label: 'TIWar\nState',       group: 'geo',
+    refs: ['attacker→TINationState', 'defender→TINationState'] },
+  { id: 'TIArmyState',      label: 'TIArmy\nState',      group: 'geo',
+    refs: ['currentRegion→TIRegionState', 'homeRegion→TIRegionState', 'faction→TIFactionState (optional)'] },
+
+  // Faction / Agents
+  { id: 'TIFactionState',   label: 'TIFaction\nState',   group: 'faction',
+    refs: ['player→TIPlayerState', 'councilors[]→TICouncilorState', 'availableOrgs[]→TIOrgState', 'fleets[]→TISpaceFleetState'] },
+  { id: 'TIPlayerState',    label: 'TIPlayer\nState',    group: 'faction',
+    refs: ['faction→TIFactionState'] },
+  { id: 'TICouncilorState', label: 'TICouncilor\nState', group: 'faction',
+    refs: ['faction→TIFactionState', 'location→TIRegionState'] },
+  { id: 'TIMissionState',   label: 'TIMission\nState',   group: 'faction',
+    refs: ['councilor→TICouncilorState', 'target→various (typed ref)'] },
+  { id: 'TIOrgState',       label: 'TIOrg\nState',       group: 'faction',
+    refs: ['homeRegion→TIRegionState'] },
+
+  // Space
+  { id: 'TISpaceBodyState',    label: 'TISpaceBody\nState',    group: 'space',
+    refs: ['nations[]→TINationState', 'habSites[]→TIHabSiteState', 'orbits[]→TIOrbitState', 'barycenter→TISpaceBodyState'] },
+  { id: 'TIOrbitState',        label: 'TIOrbit\nState',        group: 'space',
+    refs: ['barycenter→TISpaceBodyState'] },
+  { id: 'TILagrangePointState',label: 'TILagrange\nPointState', group: 'space',
+    refs: ['secondaryObject→TISpaceBodyState', 'orbits[]→TIOrbitState'] },
+  { id: 'TIHabSiteState',      label: 'TIHabSite\nState',      group: 'space',
+    refs: ['parentBody→TISpaceBodyState', 'hab→TIHabState (optional)'] },
+  { id: 'TIHabState',          label: 'TIHab\nState',          group: 'space',
+    refs: ['sectors[]→TISectorState', 'habSite→TIHabSiteState (optional)'] },
+  { id: 'TISectorState',       label: 'TISector\nState',       group: 'space',
+    refs: ['hab→TIHabState', 'faction→TIFactionState', 'habModules[]→TIHabModuleState'] },
+  { id: 'TIHabModuleState',    label: 'TIHabModule\nState',    group: 'space',
+    refs: ['sector→TISectorState'] },
+  { id: 'TISpaceFleetState',   label: 'TISpaceFleet\nState',   group: 'space',
+    refs: ['ships[]→TISpaceShipState', 'barycenter→TISpaceBodyState'] },
+  { id: 'TISpaceShipState',    label: 'TISpaceShip\nState',    group: 'space',
+    refs: ['fleet→TISpaceFleetState'] },
+
+  // Infrastructure — reference TIRegionState only
+  { id: 'TILaunchFacilityState',         label: 'TILaunch\nFacilityState',         group: 'infra',
+    refs: ['region→TIRegionState'] },
+  { id: 'TIMissionControlFacilityState', label: 'TIMissionControl\nFacilityState', group: 'infra',
+    refs: ['region→TIRegionState'] },
+  { id: 'TISpaceDefensesFacilityState',  label: 'TISpaceDefenses\nFacilityState',  group: 'infra',
+    refs: ['region→TIRegionState'] },
+
+  // Alien — all reference TIRegionState
+  { id: 'TIRegionAlienFacilityState',  label: 'TIRegionAlien\nFacilityState',  group: 'alien', refs: ['region→TIRegionState'] },
+  { id: 'TIRegionAlienActivityState',  label: 'TIRegionAlien\nActivityState',  group: 'alien', refs: ['region→TIRegionState'] },
+  { id: 'TIRegionUFOLandingState',     label: 'TIRegionUFO\nLandingState',     group: 'alien', refs: ['region→TIRegionState'] },
+  { id: 'TIRegionUFOCrashdownState',   label: 'TIRegionUFO\nCrashdownState',   group: 'alien', refs: ['region→TIRegionState'] },
+  { id: 'TIRegionXenoformingState',    label: 'TIRegionXeno\nformingState',    group: 'alien', refs: ['region→TIRegionState'] },
+];
+
+// Only ID-reference edges, verified from save data
+const EDGES = [
+  // Nation <-> its CPs
+  { from: 'TINationState',    to: 'TIControlPoint' },
+  { from: 'TIControlPoint',   to: 'TINationState' },
+  { from: 'TIControlPoint',   to: 'TIFactionState' },
+  // Nation -> regions, federation, war, army
+  { from: 'TINationState',    to: 'TIRegionState' },
+  { from: 'TINationState',    to: 'TIFederationState' },
+  { from: 'TINationState',    to: 'TIWarState' },
+  { from: 'TINationState',    to: 'TIArmyState' },
+  // War / Federation -> Nation
+  { from: 'TIWarState',       to: 'TINationState' },
+  { from: 'TIFederationState',to: 'TINationState' },
+  // Army -> region
+  { from: 'TIArmyState',      to: 'TIRegionState' },
+  // Faction
+  { from: 'TIFactionState',   to: 'TIPlayerState' },
+  { from: 'TIFactionState',   to: 'TICouncilorState' },
+  { from: 'TIFactionState',   to: 'TIOrgState' },
+  { from: 'TIFactionState',   to: 'TISpaceFleetState' },
+  { from: 'TIPlayerState',    to: 'TIFactionState' },
+  { from: 'TICouncilorState', to: 'TIFactionState' },
+  { from: 'TICouncilorState', to: 'TIRegionState' },
+  { from: 'TIMissionState',   to: 'TICouncilorState' },
+  { from: 'TIOrgState',       to: 'TIRegionState' },
+  // Space body tree
+  { from: 'TISpaceBodyState', to: 'TINationState' },
+  { from: 'TISpaceBodyState', to: 'TIHabSiteState' },
+  { from: 'TISpaceBodyState', to: 'TIOrbitState' },
+  { from: 'TISpaceBodyState', to: 'TISpaceBodyState' },   // barycenter self-ref
+  { from: 'TIOrbitState',     to: 'TISpaceBodyState' },
+  { from: 'TILagrangePointState', to: 'TISpaceBodyState' },
+  { from: 'TILagrangePointState', to: 'TIOrbitState' },
+  // Hab chain
+  { from: 'TIHabSiteState',   to: 'TISpaceBodyState' },
+  { from: 'TIHabSiteState',   to: 'TIHabState' },
+  { from: 'TIHabState',       to: 'TISectorState' },
+  { from: 'TIHabState',       to: 'TIHabSiteState' },
+  { from: 'TISectorState',    to: 'TIHabState' },
+  { from: 'TISectorState',    to: 'TIFactionState' },
+  { from: 'TISectorState',    to: 'TIHabModuleState' },
+  { from: 'TIHabModuleState', to: 'TISectorState' },
+  // Fleet / ship
+  { from: 'TISpaceFleetState',to: 'TISpaceShipState' },
+  { from: 'TISpaceFleetState',to: 'TISpaceBodyState' },
+  { from: 'TISpaceShipState', to: 'TISpaceFleetState' },
+  // Infrastructure -> region
+  { from: 'TILaunchFacilityState',         to: 'TIRegionState' },
+  { from: 'TIMissionControlFacilityState', to: 'TIRegionState' },
+  { from: 'TISpaceDefensesFacilityState',  to: 'TIRegionState' },
+  // Alien -> region
+  { from: 'TIRegionAlienFacilityState', to: 'TIRegionState' },
+  { from: 'TIRegionAlienActivityState', to: 'TIRegionState' },
+  { from: 'TIRegionUFOLandingState',    to: 'TIRegionState' },
+  { from: 'TIRegionUFOCrashdownState',  to: 'TIRegionState' },
+  { from: 'TIRegionXenoformingState',   to: 'TIRegionState' },
+  // Region -> alien sub-states
+  { from: 'TIRegionState', to: 'TIRegionAlienFacilityState' },
+  { from: 'TIRegionState', to: 'TIRegionAlienActivityState' },
+  { from: 'TIRegionState', to: 'TIRegionUFOLandingState' },
+  { from: 'TIRegionState', to: 'TIRegionUFOCrashdownState' },
+  { from: 'TIRegionState', to: 'TIRegionXenoformingState' },
+];
+
+const GROUP_COLORS = {
+  core:    '#5b7cf7',
+  geo:     '#7fc97f',
+  space:   '#f7a85b',
+  faction: '#c97fff',
+  alien:   '#ff6b6b',
+  infra:   '#5bcfc9',
+};
+
+const CLUSTER_CENTERS = {
+  core:    { cx:   0, cy: -360 },
+  geo:     { cx: -360, cy:  20 },
+  faction: { cx:  340, cy: -160 },
+  space:   { cx:  260, cy:  300 },
+  infra:   { cx: -160, cy:  340 },
+  alien:   { cx: -420, cy:  240 },
+};
+
+// Assign initial positions
+(function layoutNodes() {
+  const counts = {}, indices = {};
+  NODES.forEach(n => { counts[n.group] = (counts[n.group] || 0) + 1; });
+  NODES.forEach(n => {
+    const i = indices[n.group] || 0;
+    indices[n.group] = i + 1;
+    const total = counts[n.group];
+    const angle = (2 * Math.PI * i / total) - Math.PI / 2;
+    const r = Math.max(90, total * 24);
+    const c = CLUSTER_CENTERS[n.group];
+    n.x = c.cx + r * Math.cos(angle);
+    n.y = c.cy + r * Math.sin(angle);
+    n.vx = 0; n.vy = 0;
+  });
+})();
+
+const canvas = document.getElementById('graph');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+const container = document.getElementById('canvas-container');
+
+let W, H, scale = 1, panX = 0, panY = 0;
+let hoveredNode = null, isDragging = false, lastMX = 0, lastMY = 0;
+
+function resize() {
+  W = container.clientWidth;
+  H = container.clientHeight;
+  canvas.width = W; canvas.height = H;
+}
+resize();
+window.addEventListener('resize', () => { resize(); draw(); });
+
+const cx = () => W / 2;
+const cy = () => H / 2;
+
+function toScreen(x, y) {
+  return { sx: cx() + (x + panX) * scale, sy: cy() + (y + panY) * scale };
+}
+function toWorld(sx, sy) {
+  return { x: (sx - cx()) / scale - panX, y: (sy - cy()) / scale - panY };
+}
+
+const nodeIndex = {};
+NODES.forEach(n => { nodeIndex[n.id] = n; });
+
+const R = 28;
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0f1117';
+  ctx.fillRect(0, 0, W, H);
+
+  // Edges
+  EDGES.forEach(e => {
+    const a = nodeIndex[e.from], b = nodeIndex[e.to];
+    if (!a || !b || a === b) return;
+    const { sx: ax, sy: ay } = toScreen(a.x, a.y);
+    const { sx: bx, sy: by } = toScreen(b.x, b.y);
+    const highlighted = hoveredNode && (hoveredNode.id === e.from || hoveredNode.id === e.to);
+
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.strokeStyle = highlighted ? 'rgba(201,209,255,0.55)' : 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = highlighted ? 1.8 : 1;
+    ctx.stroke();
+
+    if (highlighted) {
+      const angle = Math.atan2(by - ay, bx - ax);
+      const r = R * scale;
+      const tx = bx - r * Math.cos(angle);
+      const ty = by - r * Math.sin(angle);
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(tx - 9 * Math.cos(angle - 0.4), ty - 9 * Math.sin(angle - 0.4));
+      ctx.lineTo(tx - 9 * Math.cos(angle + 0.4), ty - 9 * Math.sin(angle + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(201,209,255,0.7)';
+      ctx.fill();
+    }
+  });
+
+  // Nodes
+  NODES.forEach(n => {
+    const { sx, sy } = toScreen(n.x, n.y);
+    const r = R * scale;
+    const color = GROUP_COLORS[n.group];
+    const isHovered = hoveredNode && hoveredNode.id === n.id;
+    const isConnected = hoveredNode && !isHovered && EDGES.some(e =>
+      (e.from === hoveredNode.id && e.to === n.id) ||
+      (e.to === hoveredNode.id && e.from === n.id)
+    );
+
+    if (isHovered || isConnected) {
+      const grd = ctx.createRadialGradient(sx, sy, r, sx, sy, r + 10);
+      grd.addColorStop(0, color + '44');
+      grd.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(sx, sy, r + 10, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.fillStyle = isHovered ? color : '#1a1d27';
+    ctx.fill();
+    ctx.strokeStyle = isHovered ? '#fff' : (isConnected ? color : color + '99');
+    ctx.lineWidth = isHovered ? 2.5 : 1.5;
+    ctx.stroke();
+
+    const lines = n.label.split('\n');
+    const fontSize = Math.max(8, Math.min(11, 10 * scale));
+    ctx.font = `${isHovered ? 700 : 500} ${fontSize}px 'Segoe UI', sans-serif`;
+    ctx.fillStyle = isHovered ? '#fff' : (isConnected ? '#ddd' : '#999');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lh = fontSize * 1.3;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, sx, sy + (i - (lines.length - 1) / 2) * lh);
+    });
+  });
+}
+
+// Force-directed layout
+function tick() {
+  NODES.forEach(n => {
+    let fx = 0, fy = 0;
+    NODES.forEach(m => {
+      if (m === n) return;
+      const dx = n.x - m.x, dy = n.y - m.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const f = 3200 / (d * d);
+      fx += (dx / d) * f;
+      fy += (dy / d) * f;
+    });
+    EDGES.forEach(e => {
+      let other = null;
+      if (e.from === n.id) other = nodeIndex[e.to];
+      else if (e.to === n.id) other = nodeIndex[e.from];
+      if (!other || other === n) return;
+      const dx = other.x - n.x, dy = other.y - n.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const f = (d - 155) * 0.014;
+      fx += (dx / d) * f;
+      fy += (dy / d) * f;
+    });
+    const c = CLUSTER_CENTERS[n.group];
+    fx += (c.cx - n.x) * 0.007;
+    fy += (c.cy - n.y) * 0.007;
+    n.vx = (n.vx + fx) * 0.65;
+    n.vy = (n.vy + fy) * 0.65;
+    n.x += n.vx * 0.4;
+    n.y += n.vy * 0.4;
+  });
+  draw();
+  requestAnimationFrame(tick);
+}
+
+// Mouse interaction
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  if (isDragging) {
+    panX += (mx - lastMX) / scale;
+    panY += (my - lastMY) / scale;
+    lastMX = mx; lastMY = my;
+    return;
+  }
+
+  const { x, y } = toWorld(mx, my);
+  hoveredNode = null;
+  for (const n of NODES) {
+    const dx = n.x - x, dy = n.y - y;
+    if (Math.sqrt(dx * dx + dy * dy) < R) { hoveredNode = n; break; }
+  }
+
+  if (hoveredNode) {
+    const n = hoveredNode;
+    const color = GROUP_COLORS[n.group];
+    const refs = n.refs ? n.refs.map(r => `<div>· ${r}</div>`).join('') : '<div style="color:#555">no outgoing refs</div>';
+    tooltip.innerHTML = `
+      <div class="tt-title">${n.id}</div>
+      <div class="tt-type" style="color:${color}">${n.group.toUpperCase()}</div>
+      <div class="tt-refs"><b>ID references in Value:</b><br>${refs}</div>
+    `;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (mx + 16) + 'px';
+    tooltip.style.top = (my - 10) + 'px';
+    canvas.style.cursor = 'pointer';
+  } else {
+    tooltip.style.display = 'none';
+    canvas.style.cursor = 'grab';
+  }
+});
+
+canvas.addEventListener('mousedown', e => {
+  isDragging = true;
+  const rect = canvas.getBoundingClientRect();
+  lastMX = e.clientX - rect.left;
+  lastMY = e.clientY - rect.top;
+  canvas.style.cursor = 'grabbing';
+});
+canvas.addEventListener('mouseup', () => { isDragging = false; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('mouseleave', () => { isDragging = false; tooltip.style.display = 'none'; });
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  scale = Math.max(0.3, Math.min(3, scale * (e.deltaY < 0 ? 1.1 : 0.9)));
+}, { passive: false });
+
+tick();
+</script>
+</body>
+</html>
