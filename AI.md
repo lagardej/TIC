@@ -168,6 +168,18 @@ infrastructure → any layer (domain, application)
 
 ---
 
+## Development Philosophy
+
+**Make it work, then make it good.** Prioritize working code with tests over premature
+optimization or abstraction. When a simpler, explicit approach serves the need, use it.
+Refactoring is planned and scheduled — when boilerplate becomes a burden, we refactor.
+
+Example: Event deserialization uses explicit, type-safe code (no reflection magic) rather
+than a framework. If boilerplate grows, Phase 1R (refactor) explores Pydantic. But first,
+it must work and be tested.
+
+---
+
 ## Workflow
 
 For any non-trivial task:

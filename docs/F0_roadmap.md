@@ -255,6 +255,18 @@ Wires the query to a FastAPI + HTMX + Jinja2 page.
 
 ---
 
+### Phase 1R — Refactoring
+
+If Phase 1 event deserialization boilerplate exceeds ~100 lines across all event types,
+evaluate Pydantic for F1+. Do not introduce Pydantic mid-F0; make the current solution
+work first.
+
+**Decision point:** After Phase 2 (Campaign domain events), reassess. If explicit
+deserializers remain maintainable, continue as-is. If burden is high, refactor to
+Pydantic and update Phase 3 onwards.
+
+---
+
 ### Definition of Done for F0
 
 - All tests pass (`pytest`)
