@@ -1,0 +1,77 @@
+[project]
+name = "tic"
+version = "0.1.0"
+description = "Terra Invicta Companion — data visualisation and historical trends"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["abcdef"]
+
+[tool.uv.sources]
+abcdef = { git = "https://github.com/lagardej/abcdef-py" }
+
+[dependency-groups]
+dev = [
+    "coverage[toml]>=7.0,<8",
+    "mutmut>=3.3.0,<4",
+    "pyright>=1.1.408,<2",
+    "pytest-cov>=6.0,<8",
+    "pytest-xdist>=3.0,<4",
+    "pytest>=9.0.2,<10",
+    "ruff>=0.15.6,<1",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.coverage.run]
+branch = true
+source = ["tic"]
+
+
+
+[tool.pyright]
+exclude = ["mutants/", "**/node_modules", "**/__pycache__", "**/.*", ".venv"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=tic --cov-report=term-missing"
+testpaths = ["tests"]
+norecursedirs = ["mutants"]
+
+[tool.ruff]
+exclude = ["mutants/"]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
+
+[tool.ruff.lint]
+ignore = [
+    "D203",  # one-blank-line-before-class (conflicts with D211)
+    "D213",  # multi-line-summary-second-line (conflicts with D212)
+]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "ANN",  # flake8-annotations
+    "TCH",  # flake8-type-checking
+    "PTH",  # flake8-use-pathlib
+    "RUF",  # ruff-specific
+    "C90",  # mccabe complexity
+    "N",    # pep8-naming
+    "D",    # pydocstring
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
