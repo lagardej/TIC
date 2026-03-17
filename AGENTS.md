@@ -1,7 +1,7 @@
-# Agent Instructions for TIC
+# Agent Instructions for this project
 
-This document contains all rules and instructions for AI agents working on the TIC (Terra Invicta Companion) project. It
-is agent-agnostic and takes precedence over any default agent behaviour.
+This document contains the rules and instructions for AI agents working on this project. It is agent-agnostic and
+takes precedence over any default agent behaviour.
 
 **Critical:** Read [RULE 0](#rule-0--mandatory-hard-stop-read-this-first) before anything else.
 
@@ -183,51 +183,11 @@ direction.**
 
 ## Coding Conventions
 
-### Language & Tooling
+Coding conventions and language/tooling-specific rules are maintained in a separate document:
 
-- Python 3.11+
-- Type hints everywhere — no untyped function signatures
-- Docstrings on all public classes and functions (Google style)
-- Dataclasses for value objects and events
-- No third-party dependencies in `domain/` layers
-- Prefer explicit over implicit
-- Prefer flat over nested
-- Small, single-purpose functions
-
-### Line Length
-
-- 88 characters maximum for all content: code, comments, and docstrings
-- Code lines are enforced by ruff; comments and docstrings are not — apply manually
-- Reflow wrapped lines to use the full width rather than breaking earlier than needed
-
-### Encoding
-
-Always pass `encoding="utf-8"` explicitly when opening files or calling `subprocess.run` with `text=True` — never rely
-on the system default. Windows systems use `cp1252` by default; omitting the encoding causes silent failures or decode
-errors when Unicode characters are present.
-
-### Language & Spelling
-
-Use British English spelling throughout code comments, docstrings, and documentation.
-
-Examples: `behaviour`, `visualisation`, `organisation`, `colour`, `analyse`, `optimise`
-
-This applies to comments, docstrings, and all written documentation (README, markdown, etc.).
-
-### Testing
-
-- Tests are written before the code they cover (TDD)
-- Tests live in a top-level `tests/` directory, mirroring the module structure
-- Tests have no dependency on `domain/` internals — test behaviour, not implementation
-- No test code inside the module directories
-
-### Commit Messages
-
-- Follow the Conventional Commits format: `type(scope): description`
-- ASCII only — no Unicode characters (no em dashes, arrows, bullets, etc.). Non-ASCII characters cause encoding errors
-  on Windows.
-- Use plain hyphens (`-`) or colons (`:`) instead of dashes or arrows
-- Body lines are plain prose; no special characters
+- See `docs/design/coding_conventions.md` for the project's coding standards, style rules, testing conventions, and
+  commit message guidelines. Treat that document as the authoritative source for coding practices.
+ - For Python-specific guidance (when working in Python code), see `docs/design/python_conventions.md`.
 
 ---
 

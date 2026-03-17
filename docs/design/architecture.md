@@ -1,7 +1,7 @@
-# TIC Architecture Reference
+# Architecture Reference
 
-This document centralises the architectural design of TIC.
-It explains the "why" behind structural decisions and provides a reference for implementing features consistently.
+This document centralises the architectural design of this project. It explains the "why" behind structural
+decisions and provides a reference for implementing features consistently.
 
 ---
 
@@ -14,16 +14,17 @@ Every decision is enforced at the module level and validated at build time.
 
 ## Framework Boundary
 
-`abcdef` is an extracted framework dependency, not part of the TIC codebase structure.
+`abcdef` is an extracted framework dependency, not part of this project's codebase structure.
 
 - Source repository: <https://github.com/lagardej/abcdef-py>
-- TIC application code imports `abcdef` only through its published package API.
-- Framework evolution happens in the `abcdef` repository; TIC pins to a git commit via `uv.lock`.
-- TIC architecture rules in this document apply to TIC modules only.
+- Application code imports `abcdef` only through its published package API.
+- Framework evolution happens in the `abcdef` repository; the project may pin to a git commit via `uv.lock` or similar.
+- Architecture rules in this document apply to this project's modules only.
 
-## Spring Modulith Philosophy
+## Modular Philosophy
 
-TIC adopts the *Spring Modulith* philosophy: modules are first-class design units with enforced boundaries, explicit public APIs, and automated verification.
+This project adopts a modular philosophy: modules are first-class design units with enforced boundaries, explicit
+public APIs, and automated verification where practical.
 
 ### Core Principles
 
@@ -69,7 +70,7 @@ developer):
 ## Modules (Abstract)
 
 A module is an organisational boundary within which domain language and models are consistent.
-TIC uses modules to partition responsibilities and enforce strict separation.
+This project uses modules to partition responsibilities and enforce strict separation.
 
 Modules fall into two categories:
 
@@ -122,7 +123,7 @@ tic/
 
 ## Command Modules vs Query Modules
 
-TIC enforces strict separation between write-side (command) and read-side (query) modules.
+This project enforces strict separation between write-side (command) and read-side (query) modules.
 
 ### Command Modules
 
@@ -265,57 +266,25 @@ The event store is the system of records. All state changes are captured as immu
 
 **Event design (abstract):**
 
-* Events are plain classes with no behaviour (not dataclasses).
+* Events are immutable data records representing facts that have occurred. Prefer simple, serialisable data
+  structures with no behavioural logic.
 
 ### Event Immutability
 
-`Event` enforces immutability via `__setattr__` and `__delattr__` overrides,
-using the same pattern as `AggregateId`. Any attempt to assign or delete an
-attribute after construction raises `AttributeError`.
+Events must be treated as immutable once created. Enforce immutability using the language's facilities or clear
+conventions (for example, read-only data types, immutable value objects, or defensive copying). The implementation
+details will vary by language; document language-specific patterns in the language convention documents.
 
-Because `Event` is not a dataclass, subclasses must initialise their own
-attributes using `object.__setattr__(self, name, value)` in `__init__` —
-normal assignment (`self.x = y`) is blocked by the override.
+### Abstract Event Types
 
-```python
-class ThingHappened(DomainEvent):
-    event_type = "thing_happened"
-
-    def __init__(self, value: str, *, occurred_at: datetime, aggregate_id: str) -> None:
-        super().__init__(occurred_at=occurred_at, aggregate_id=aggregate_id)
-        object.__setattr__(self, "value", value)  # required
-```
-
-Plain-class subclasses that use `self.x = y` in `__init__` will raise
-`AttributeError` at construction time — the convention must be followed
-manually.
-
-### Abstract Event Classes (`_abstract_event`)
-
-`Event.__init_subclass__` enforces that every concrete subclass declares a
-non-empty `event_type` directly in its own class body. Intermediate base
-classes in the hierarchy (e.g. `DomainEvent`) need to opt out of this check
-because they are not themselves concrete events.
-
-They do so by setting `_abstract_event = True` directly in their class body:
-
-```python
-class DomainEvent(Event):
-    _abstract_event = True  # exempt from event_type enforcement
-```
-
-The flag is checked via `cls.__dict__.get("_abstract_event")`, so it must
-appear directly on the class — inheriting it from a parent has no effect.
-Concrete leaf classes must never set it; they must declare `event_type`.
-
-The underscore prefix marks this as an internal framework convention. It is
-not part of the public API and should not appear on application-level event
-classes.
+Every concrete event type should declare a stable identifier (an "event type") and a well-defined schema. Intermediate
+base event types may be used for grouping and should be clearly marked as abstract in the language-appropriate way.
+Document the event registry and deserialisation strategy in an implementation guide.
 
 **Aggregate rehydration:**
 
 * Aggregates are rebuilt by replaying event history in order.
-* A snapshotting system may be needed later.
+* Consider snapshotting when replay cost becomes significant.
 
 ## Message Bus
 
@@ -395,16 +364,13 @@ Code should say what it is doing. Avoid magic, reflection, and implicit conventi
 
 Validate early and raise descriptive errors.
 
+
 ### Immutability
 
-Domain entities and events are immutable where practical.
-
-`AggregateState` is a frozen dataclass. All concrete state classes must be
-declared as `@dataclass(frozen=True)`. This enforces immutability at
-construction time, provides value-based `__eq__` and `__hash__`, and makes
-`__repr__` readable without boilerplate. Plain-class subclasses (not
-decorated with `@dataclass`) will compile but will not have immutability
-enforced at runtime — the convention must be followed manually.
+Domain entities and events should be treated as immutable where practical. Use the appropriate language-level
+mechanisms (for example, read-only data structures, immutable value objects, or explicit freezing patterns) to
+enforce immutability for state objects and events. Document any language-specific enforcement techniques in the
+language convention documents.
 
 ### No Surprises
 
