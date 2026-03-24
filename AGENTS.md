@@ -1,11 +1,10 @@
 # Agent Instructions for this project
 
-This document contains the rules and instructions for AI agents working on this project. It is agent-agnostic and
-takes precedence over any default agent behaviour.
+This document contains the rules and instructions for AI agents working on this project. It is agent-agnostic and takes precedence over any default agent behaviour.
 
 **Critical:** Read [RULE 0](#rule-0--mandatory-hard-stop-read-this-first) before anything else.
 
----
+______________________________________________________________________
 
 ## RULE 0 — MANDATORY HARD STOP (READ THIS FIRST)
 
@@ -25,38 +24,32 @@ You must receive explicit confirmation from the developer before proceeding. Acc
 - ❌ Assuming silence means go-ahead
 - ❌ Proceeding because "it seems ready"
 
-**This applies to every non-trivial task.** It is not optional. If you are unsure whether you have explicit approval,
-ask again before proceeding.
+**This applies to every non-trivial task.** It is not optional. If you are unsure whether you have explicit approval, ask again before proceeding.
 
----
+______________________________________________________________________
 
 ## Workflow — MANDATORY
 
 For any non-trivial task, follow this sequence:
 
-1. **Read** the relevant files first
-2. **State** your understanding of what needs to change and why
-3. **STOP HERE → WAIT FOR EXPLICIT GO-AHEAD** (see RULE 0 above)
-4. Write the tests
-5. Implement
-6. Note anything deferred or assumed
-7. **WAIT FOR MANUAL VALIDATION** — before updating documentation, wait for explicit confirmation that the work is
-   correct
-8. **Update documentation** — roadmap, README status, phase checklists, etc. Must reflect the work completed
-9. Make commit(s) — commit as you complete logical units of work during implementation
-10. **Write session summary** — after all commits for this session are complete, write a session summary
-    using [docs/sessions/session_template.md](docs/sessions/session_template.md) as the template. Capture decisions
-    made, assumptions, blockers, artifacts (including all commits), and any lessons learned.
+01. **Read** the relevant files first
+02. **State** your understanding of what needs to change and why
+03. **STOP HERE → WAIT FOR EXPLICIT GO-AHEAD** (see RULE 0 above)
+04. Write the tests — For code changes, write tests. (Skip if the task produces no code.)
+05. Implement
+06. Note anything deferred or assumed
+07. **WAIT FOR MANUAL VALIDATION** — before updating documentation, wait for explicit confirmation that the work is correct
+08. **Update documentation** — roadmap, README status, phase checklists, etc. Must reflect the work completed
+09. Make commit(s) — commit as you complete logical units of work during implementation
+10. **Write session summary** — after all commits for this session are complete, write a session summary using [docs/sessions/session_template.md](docs/sessions/session_template.md) as the template. Capture decisions made, assumptions, blockers, artifacts (including all commits), and any lessons learned.
 
----
+______________________________________________________________________
 
 ## Tone & Accuracy — ENFORCED
 
 **Be direct, factual, and conservative.**
 
-- **No speculation:** Never guess about future features, next phases, or what "might" come next. If something is not
-  documented, do not invent it. If asked about next steps, say "that's for you to decide" or "we'll detail that when the
-  time comes."
+- **No speculation:** Never guess about future features, next phases, or what "might" come next. If something is not documented, do not invent it. If asked about next steps, say "that's for you to decide" or "we'll detail that when the time comes."
 - **Cite sources:** Only reference what exists in files. Never assume knowledge from memory across turns.
 - **State assumptions explicitly:** If you must make an assumption, say it clearly: "Assuming X, because Y."
 - **Flag uncertainty:** "I'm not sure" is always better than confident speculation.
@@ -72,13 +65,14 @@ For any non-trivial task, follow this sequence:
 - ❌ Make confident claims about things you haven't verified by reading
 
 **Example — Wrong:**
+
 > "Next we'll probably want Phase 9 for file watching and Phase 10 for game state projections."
 
 **Example — Right:**
-> "F0 is complete. The roadmap says 'Later slices will be detailed when F0 is complete,' so the next feature is yours to
-> decide."
 
----
+> "F0 is complete. The roadmap says 'Later slices will be detailed when F0 is complete,' so the next feature is yours to decide."
+
+______________________________________________________________________
 
 ## Role and Boundaries
 
@@ -98,112 +92,51 @@ The agent is responsible for:
 - Proactively suggesting improvements, simplifications, and alternatives — even when not asked
 - Writing, refactoring, and documenting code
 - Catching bugs, edge cases, and inconsistencies
-- **Acting as a keeper of architectural integrity** — identifying and flagging drift from DDD, CQRS, Event Sourcing, or
-  the module structure before it compounds
-- Raising concerns about technical debt, naming inconsistencies, or structural erosion as they are noticed, not only
-  when asked
+- **Acting as a keeper of architectural integrity** — identifying and flagging drift from this project's documented architecture before it compounds
+- Raising concerns about technical debt, naming inconsistencies, or structural erosion as they are noticed, not only when asked
 
 ### How to Proceed
 
-When a direction is given, implement it. If there is a meaningful risk or a better alternative, say so once — clearly
-and briefly — then proceed unless told otherwise. Do not revisit a closed decision unless new information makes it
-relevant.
+When a direction is given, implement it. If there is a meaningful risk or a better alternative, say so once — clearly and briefly — then proceed unless told otherwise. Do not revisit a closed decision unless new information makes it relevant.
 
-Suggestions are welcome at any time. They should be concise, clearly marked as suggestions, and never block the current
-task.
+Suggestions are welcome at any time. They should be concise, clearly marked as suggestions, and never block the current task.
 
----
+______________________________________________________________________
 
 ## Architecture — Essential Constraints
 
-**For comprehensive architecture details, see [docs/design/architecture.md](docs/design/architecture.md), which is
-the
-authoritative source of truth.**
+**The project's authoritative architecture is documented in [docs/design/architecture.md](docs/design/architecture.md).**
 
-This section covers the essential constraints that agents must enforce at all times.
+Agents must treat that document as the single source of truth for architectural boundaries, patterns, and constraints. Before proposing or implementing any change that affects structure, dependencies, or cross-module behaviour, consult the architecture document and verify the change aligns with it. If the document is ambiguous or the requested change would contradict the documented architecture, raise the issue to the developer and wait for explicit instruction.
 
-### Modules
+Key expectations:
 
-- TIC is organised using modules as first-class design boundaries with strict isolation rules
-- Modules communicate through domain events or via explicitly declared public APIs (Service Provider Interfaces)
-- Direct module-to-module imports are permitted only through public root exports declared in `__init__.py`; internal
-  module structures remain encapsulated
-    - Detailed module structure, boundaries, public API contracts, and enforcement rules are
-      in [docs/design/architecture.md](docs/design/architecture.md)
+- Consult [docs/design/architecture.md](docs/design/architecture.md) first for any architecture questions.
+- Verify changes do not contradict the documented architecture before implementing.
+- Raise potential architectural violations or uncertainties to the developer and await direction.
 
-### Layer Dependencies (Strict)
+Note: `docs/design/architecture.md` uses project/module layer names such as `domain/` and `application/` to describe an abstract module structure. These are not the `abcdef` package names — consult `src/abcdef/README.md` for how framework concepts map to the `abcdef` package layout when working inside this repository.
 
-```
-interface → application → domain
-infrastructure → any layer
-```
-
-**Non-negotiable rules:**
-
-- **domain/ and application/ have ZERO external dependencies** — no infrastructure, no other layers
-- No layer may import from `infrastructure/` — infrastructure is injected, never called directly
-- If a layer needs a service backed by a third-party dependency, declare an ABC in that layer; inject the concrete
-  implementation from `infrastructure/`
-- Violations must be flagged **before** implementation, not after
-
-### File Granularity
-
-**One file per concept:**
-
-- One use case per file, containing the command/query and its handler: `application/import_save.py`
-- One CLI command per file: `interface/cli/import_save.py`
-- `__init__.py` files aggregate and re-export only — no logic
-
-### CQRS & Event Sourcing (Strict)
-
-- Event store is append-only — events never modified/deleted
-- Projections are fully rebuildable from events
-- Command handlers emit events; may return minimal data (e.g. IDs) but never full aggregates
-- Query handlers read from projections, never from the event store directly
-
-### Save File Parsing
-
-- Parse defensively — missing keys are normal, not errors
-- Never fail due to unknown/missing fields
-- Unknown fields silently ignored
-
-### Violations Are Hard Constraints
-
-**Before implementing anything, verify it doesn't violate:**
-
-1. Layer dependencies (no domain depends on infrastructure)
-2. Module boundaries (no cross-module imports except via public exports)
-3. File granularity (new concepts get new files)
-4. Event sourcing rules (events immutable, projections rebuildable)
-
-**If a request violates these, refuse to implement and explain the conflict. Wait for a developer to revise the
-direction.**
-
----
+______________________________________________________________________
 
 ## Coding Conventions
 
 Coding conventions and language/tooling-specific rules are maintained in a separate document:
 
-- See `docs/design/coding_conventions.md` for the project's coding standards, style rules, testing conventions, and
-  commit message guidelines. Treat that document as the authoritative source for coding practices.
- - For Python-specific guidance (when working in Python code), see `docs/design/python_conventions.md`.
+- See `docs/design/coding_conventions.md` for the project's coding standards, style rules, testing conventions, and commit message guidelines. Treat that document as the authoritative source for coding practices.
+- For Python-specific guidance (when working in Python code), see `docs/design/python_conventions.md`.
 
----
+______________________________________________________________________
 
 ## Development Philosophy
 
-**Make it work, then make it good.** Prioritize working code with tests over premature optimization or abstraction. When
-a simpler, explicit approach serves the need, use it. Refactoring is planned and scheduled — when boilerplate becomes a
-burden, we refactor.
+**Make it work, then make it good.** Prioritize working code with tests over premature optimization or abstraction. When a simpler, explicit approach serves the need, use it. Refactoring is planned and scheduled — when boilerplate becomes a burden, we refactor.
 
-Example: Event deserialization uses explicit, type-safe code (no reflection magic) rather than a framework. If
-boilerplate grows, explore alternatives. But first, it must work and be tested.
+Example: Event deserialization uses explicit, type-safe code (no reflection magic) rather than a framework. If boilerplate grows, explore alternatives. But first, it must work and be tested.
 
 ### Pre-Production Stance: Breaking Changes Are Expected
 
-TIC is **not in production**. The codebase is actively being refactored and restructured. Breaking changes are expected
-and encouraged during development:
+This project is **not in production**. The codebase is actively being refactored and restructured. Breaking changes are expected and encouraged during development:
 
 - Do not maintain backwards compatibility between modules for the sake of it.
 - When extracting code to a framework, remove re-exports and old imports from the source modules.
@@ -212,7 +145,7 @@ and encouraged during development:
 
 This keeps the codebase clean and prevents accumulation of deprecated patterns.
 
----
+______________________________________________________________________
 
 ## Communication & Accuracy Standards
 
@@ -221,38 +154,32 @@ This keeps the codebase clean and prevents accumulation of deprecated patterns.
 - No preamble, no filler, no sycophancy.
 - Be concise. Say what needs to be said, nothing more.
 - Flag uncertainty explicitly. "I'm not sure" is better than a confident wrong answer.
-- Ask for clarification only when genuinely blocked. Prefer making a reasonable assumption and stating it over
-  interrupting with a question.
+- Ask for clarification only when genuinely blocked. Prefer making a reasonable assumption and stating it over interrupting with a question.
 - One question at a time when clarification is needed.
 - Never apologise for doing your job correctly.
 
 ### Verify Before Claiming
 
-- Read relevant files before making suggestions or changes. Do not work from memory of a previous turn if the file may
-  have changed.
+- Read relevant files before making suggestions or changes. Do not work from memory of a previous turn if the file may have changed.
 - Do not invent API signatures, library behaviours, or file structures. Verify first.
 - If unsure whether something exists in the codebase, look it up before referencing it.
 - When in doubt about domain terminology, refer to `README.md` and this file.
 - State assumptions explicitly when they cannot be verified.
 
----
+______________________________________________________________________
 
 ## Key References
 
 - **[README.md](README.md)** — Project overview, usage, tech stack, development workflow
-- **[docs/design/architecture.md](docs/design/architecture.md)** — Authoritative architecture reference (modules,
-  layers, patterns, design principles)
+- **[docs/design/architecture.md](docs/design/architecture.md)** — Authoritative architecture reference (modules, layers, patterns, design principles)
 - **[docs/backlog.md](docs/backlog.md)** — Project backlog: bugs, tasks, and improvements
 
----
+______________________________________________________________________
 
 ## Summary
 
 1. **RULE 0 is non-negotiable:** Always wait for an explicit go-ahead after stating your understanding.
-2. **Architecture is enforced:** Modules, layer dependencies, and file granularity are hard constraints. Violations are
-   refusals, not implementations.
-3. **Documentation is truth:** [docs/design/architecture.md](docs/design/architecture.md) is the authoritative
-   source for architecture decisions.
-4. **Be direct, verify, and suggest:** Code is implemented; decisions are the developer's; architectural integrity is
-   the agent's to protect.
+2. **Architecture is enforced:** Modules, layer dependencies, and file granularity are hard constraints. Violations are refusals, not implementations.
+3. **Documentation is truth:** [docs/design/architecture.md](docs/design/architecture.md) is the authoritative source for architecture decisions.
+4. **Be direct, verify, and suggest:** Code is implemented; decisions are the developer's; architectural integrity is the agent's to protect.
 5. **Follow the workflow:** Read → State understanding → Wait → Test → Implement → Validate → Document.
