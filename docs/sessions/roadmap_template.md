@@ -1,25 +1,20 @@
 # TIC — [FX] Roadmap Template
 
-**Use this template for all feature roadmaps.** Each feature corresponds to one module (bounded context). Replace
-`[FX]` with the phase number, `[Module Name]` with the domain concept, and fill in the sections below.
+**Use this template for all feature roadmaps.** Each feature corresponds to one module (bounded context). Replace `[FX]` with the phase number, `[Module Name]` with the domain concept, and fill in the sections below.
 
----
+______________________________________________________________________
 
 ## [FX] — [Module Name]
 
-**Objective:** Clear, single-sentence statement of what the user can do with this feature end-to-end. Describe the
-working vertical slice: what data enters the system, what processing happens, and what the user sees as output.
+**Objective:** Clear, single-sentence statement of what the user can do with this feature end-to-end. Describe the working vertical slice: what data enters the system, what processing happens, and what the user sees as output.
 
-**Key architectural decision(s):** Identity model, snapshot vs. incremental tracking, which entities are aggregates, any
-major cross-module boundaries, etc. Keep this brief — the detailed decisions live in design sessions.
+**Key architectural decision(s):** Identity model, snapshot vs. incremental tracking, which entities are aggregates, any major cross-module boundaries, etc. Keep this brief — the detailed decisions live in design sessions.
 
----
+______________________________________________________________________
 
 ## Phase Overview
 
-Phases are ordered by dependency: each phase assumes prior phases are complete. Each phase has a dedicated design
-session before implementation. Phases 1–5 use in-memory implementations provided by the project; Phase 6 swaps in
-durable storage.
+Phases are ordered by dependency: each phase assumes prior phases are complete. Each phase has a dedicated design session before implementation. Phases 1–5 use in-memory implementations provided by the project; Phase 6 swaps in durable storage.
 
 ### Phase 1 — Read Model & Projection
 
@@ -32,12 +27,11 @@ durable storage.
 - Event subscriber handler signature: what events will update this projection
 - Tests: document construction, field types, constraints (no implementation yet)
 
----
+______________________________________________________________________
 
 ### Phase 2 — Domain Model: [Aggregate Name] Aggregate
 
-**Goal:** Define the primary aggregate, its events, and invariants. Events must carry at least the data needed for Phase
-1's projection.
+**Goal:** Define the primary aggregate, its events, and invariants. Events must carry at least the data needed for Phase 1's projection.
 
 **Depends on:** Phase 1 (read model defines scope)
 
@@ -49,7 +43,7 @@ durable storage.
 - Any value objects for sub-domains
 - Tests: aggregate creation, state transitions, invariants, event collection
 
----
+______________________________________________________________________
 
 ### Phase 3 — Application Layer: Commands & Handlers, Queries & Handlers
 
@@ -66,7 +60,7 @@ durable storage.
 - Event subscriber handler: transforms Phase 2 events into Phase 1 documents
 - Tests: command dispatch, state transitions, query results, event → projection mapping (using in-memory repository and store)
 
----
+______________________________________________________________________
 
 ### Phase 4 — CLI Interface: Commands
 
@@ -81,7 +75,7 @@ durable storage.
 - Output formatting (tables, lists, details)
 - Manual verification: all commands discoverable via `help`, run correctly with sample data (all using in-memory storage)
 
----
+______________________________________________________________________
 
 ### Phase 5 — Web UI: Views & Routes
 
@@ -96,7 +90,7 @@ durable storage.
 - Navigation integration (links from other pages, if applicable)
 - Manual verification: all pages render correctly, new data appears immediately, URLs are user-friendly (all using in-memory storage)
 
----
+______________________________________________________________________
 
 ### Phase 6 — Infrastructure: Durable Storage
 
@@ -114,7 +108,7 @@ durable storage.
 - Tests: end-to-end persistence, event store append/load, projection rebuildability, isolation
 - Manual verification: data persists across application restart, CLI/web UI read from disk correctly
 
----
+______________________________________________________________________
 
 ## Design Session Workflow
 
@@ -126,7 +120,7 @@ For each phase:
 4. **Implementation:** Code
 5. **Validation:** Manual verification before documenting
 
----
+______________________________________________________________________
 
 ## Notes
 

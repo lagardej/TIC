@@ -1,0 +1,1301 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Terra Invicta save-game (best-effort)",
+  "description": "Permissive JSON Schema derived from staehle/TISE examples. Validates container shape and many common gamestate types.",
+  "type": "object",
+  "required": [
+    "currentID",
+    "gamestates"
+  ],
+  "properties": {
+    "currentID": {
+      "$ref": "#/definitions/idWrapper"
+    },
+    "gamestates": {
+      "type": "object",
+      "description": "Map: gamestate type name -> array of {Key, Value} entries",
+      "patternProperties": {
+        "^.+$": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "Key",
+                  "Value"
+                ],
+                "properties": {
+                  "Key": {
+                    "$ref": "#/definitions/idWrapper"
+                  },
+                  "Value": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "idWrapper": {
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": true
+    },
+    "dateTime": {
+      "type": "object",
+      "required": [
+        "year",
+        "month",
+        "day",
+        "hour",
+        "minute",
+        "second",
+        "millisecond"
+      ],
+      "properties": {
+        "year": {
+          "type": "integer"
+        },
+        "month": {
+          "type": "integer"
+        },
+        "day": {
+          "type": "integer"
+        },
+        "hour": {
+          "type": "integer"
+        },
+        "minute": {
+          "type": "integer"
+        },
+        "second": {
+          "type": "integer"
+        },
+        "millisecond": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": true
+    },
+    "vector3": {
+      "type": "object",
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": true
+    },
+    "quaternion": {
+      "type": "object",
+      "required": [
+        "w",
+        "x",
+        "y",
+        "z"
+      ],
+      "properties": {
+        "w": {
+          "type": "number"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": true
+    },
+    "reference": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/idWrapper"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "genericStateArray": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "Key",
+          "Value"
+        ],
+        "properties": {
+          "Key": {
+            "$ref": "#/definitions/idWrapper"
+          },
+          "Value": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "genericStateObject": {
+      "type": "object"
+    },
+    "genericState": {
+      "anyOf": [
+        { "$ref": "#/definitions/genericStateArray" },
+        { "$ref": "#/definitions/genericStateObject" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "gamestates": {
+            "type": "object"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "gamestates": {
+            "patternProperties": {
+              "^PavonisInteractive\\.TerraInvicta\\.TISpaceBodyState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "required": [
+                        "ID",
+                        "exists",
+                        "archived",
+                        "$type"
+                      ],
+                      "properties": {
+                        "currentTilt": {
+                          "$ref": "#/definitions/quaternion"
+                        },
+                        "nations": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/idWrapper"
+                          }
+                        },
+                        "habSites": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/idWrapper"
+                          }
+                        },
+                        "currentModelResource": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "orbits": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/idWrapper"
+                          }
+                        },
+                        "HohmannDates": {
+                          "type": "object",
+                          "additionalProperties": true
+                        },
+                        "epoch_DateTime": {
+                          "$ref": "#/definitions/dateTime"
+                        },
+                        "_rnd_rotationOffset_Deg": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "globalPosition": {
+                          "$ref": "#/definitions/vector3"
+                        },
+                        "barycenter": {
+                          "$ref": "#/definitions/reference"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "templateName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "displayName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TISpaceBodyState"
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMetadataState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "playerFactionName": {
+                          "type": "string"
+                        },
+                        "gameTimeString": {
+                          "type": "string"
+                        },
+                        "difficulty": {
+                          "type": "string"
+                        },
+                        "playedWithMods": {
+                          "type": "boolean"
+                        },
+                        "customDifficulty": {
+                          "type": "boolean"
+                        },
+                        "selectedFactionsForScenario": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "playerFactionIconPath": {
+                          "type": "string"
+                        },
+                        "playerFactionGradientPath": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "lastCompletedObjectiveArtPath": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "lastCompletedObjectiveName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIMetadataState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TITimeState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "daysInCampaign": {
+                          "type": "integer"
+                        },
+                        "currentDateTime": {
+                          "$ref": "#/definitions/dateTime"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "templateName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "displayName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TITimeState"
+                        }
+                      },
+                      "required": [
+                        "currentDateTime",
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIArmyState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "currentRegion": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "homeRegion": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "faction": {
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "deploymentType": {
+                          "type": "string"
+                        },
+                        "strength": {
+                          "type": "number"
+                        },
+                        "controlPointIdx": {
+                          "type": "integer"
+                        },
+                        "createdFromTemplate": {
+                          "type": "boolean"
+                        },
+                        "currentOperations": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "destroyed": {
+                          "type": "boolean"
+                        },
+                        "armyType": {
+                          "type": "string"
+                        },
+                        "displayNameWithArticle": {
+                          "type": "string"
+                        },
+                        "destinationQueue": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "templateName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "displayName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIArmyState"
+                        }
+                      },
+                      "required": [
+                        "ID",
+                        "exists",
+                        "archived",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TINationState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "governmentType": {
+                          "type": "string"
+                        },
+                        "population": {
+                          "type": "number"
+                        },
+                        "controlPoints": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/idWrapper"
+                          }
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TINationState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIFactionState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "rivals": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/idWrapper"
+                          }
+                        },
+                        "memberNations": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/idWrapper"
+                          }
+                        },
+                        "playerControlled": {
+                          "type": "boolean"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIFactionState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIRegionState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "controlPoint": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "regionType": {
+                          "type": "string"
+                        },
+                        "population": {
+                          "type": "number"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIRegionState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIControlPoint$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "region": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "ownerFaction": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "garrisonSize": {
+                          "type": "number"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIControlPoint"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TISpaceFleetState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "ships": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/idWrapper"
+                          }
+                        },
+                        "currentOrbit": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "faction": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TISpaceFleetState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TISpaceShipState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "habs": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/idWrapper"
+                          }
+                        },
+                        "crewSize": {
+                          "type": "number"
+                        },
+                        "orbit": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TISpaceShipState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIHabSiteState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "siteType": {
+                          "type": "string"
+                        },
+                        "modules": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/idWrapper"
+                          }
+                        },
+                        "capacity": {
+                          "type": "integer"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIHabSiteState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIPromptQueueState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "queue": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIPromptQueueState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TINotificationQueueState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "notifications": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TINotificationQueueState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIOfficerState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "rank": {
+                          "type": [
+                            "string",
+                            "integer"
+                          ]
+                        },
+                        "skills": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIOfficerState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TICouncilorState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "ideology": {
+                          "type": "string"
+                        },
+                        "currentRegion": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TICouncilorState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIPlayerState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "playerFaction": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "resources": {
+                          "type": "object",
+                          "additionalProperties": true
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIPlayerState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMissionState$": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Key",
+                    "Value"
+                  ],
+                  "properties": {
+                    "Key": {
+                      "$ref": "#/definitions/idWrapper"
+                    },
+                    "Value": {
+                      "type": "object",
+                      "properties": {
+                        "missionType": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "target": {
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "reward": {
+                          "type": "object",
+                          "additionalProperties": true
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "ID": {
+                          "$ref": "#/definitions/idWrapper"
+                        },
+                        "exists": {
+                          "type": "boolean"
+                        },
+                        "$type": {
+                          "const": "PavonisInteractive.TerraInvicta.TIMissionState"
+                        }
+                      },
+                      "required": [
+                        "archived",
+                        "ID",
+                        "exists",
+                        "$type"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIWarState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TILagrangePointState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TILaunchFacilityState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMissionControlFacilityState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TISpaceDefensesFacilityState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIRegionAlienFacilityState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIRegionAlienActivityState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIRegionUFOLandingState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIRegionUFOCrashdownState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIRegionXenoformingState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIOrgState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIHabState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TITimeEvent$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TISectorState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIHabModuleState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIFederationState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMissionPhaseState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIEffectsState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIGlobalResearchState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIGlobalValuesState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TISpaceCombatState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TISpaceCombatProjectileState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMegafaunaArmyState$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^TIHistoricalData$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.FactionGoal_.*$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMissionCondition_.*$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMissionEffect_.*$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMissionModifier_.*$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMissionCost_.*$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMissionResolution_.*$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.TIMissionTarget_.*$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^PavonisInteractive\\.TerraInvicta\\.Trajectory_Patched(\\+.*)?$": {
+                "$ref": "#/definitions/genericState"
+              },
+              "^System\\.Collections\\.Generic\\..*$": {
+                "$ref": "#/definitions/genericStateObject"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

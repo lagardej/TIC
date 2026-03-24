@@ -30,7 +30,7 @@ def main() -> None:
     timestamp = os.environ.get("CI_TIMESTAMP", get_timestamp())
 
     log_path = make_log_path("format_doc", timestamp)
-    cmd = "uv run mdformat README.md AGENTS.md CONTRIBUTING.md docs/ src/"
+    cmd = "uv run mdformat ."
 
     # Run the command
     result = subprocess.run(
